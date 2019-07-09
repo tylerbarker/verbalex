@@ -1,0 +1,23 @@
+# WIP
+version: v1.0
+name: Verbalex
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Build Pipeline
+    task:
+      jobs:
+        - name: "mix tasks"
+          commands:
+            - checkout
+            - sem-version elixir 1.8.1
+            - mix do local.rebar --force, local.hex --force
+            - mix deps.get
+            - mix compile
+            - mix test
+            - mix credo
+            - mix dialyzer
+            - mix format
+            - mix docs
