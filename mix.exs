@@ -1,7 +1,7 @@
 defmodule Verbalex.MixProject do
   use Mix.Project
 
-  @version "0.1.0-dev"
+  @version "0.2.0"
 
   def project do
     [
@@ -45,8 +45,7 @@ defmodule Verbalex.MixProject do
       maintainers: ["Tyler Barker"],
       licenses: ["Apache 2.0"],
       links: %{
-        "GitHub" => "https://github.com/tylerbarker/verbalex",
-        "Docs" => "https://hex.pm/packages/verbalex"
+        "Source code" => "https://github.com/tylerbarker/verbalex"
       }
     ]
   end
