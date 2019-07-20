@@ -6,6 +6,46 @@ defmodule Verbalex do
   defguardp are_binaries(x, y) when is_binary(x) and is_binary(y)
   defguardp are_integers(x, y) when is_integer(x) and is_integer(y)
 
+  @classes ~w(
+    alnum
+    alpha
+    ascii
+    blank
+    cntrl
+    digit
+    graph
+    lower
+    print
+    punct
+    space
+    upper
+    word
+    xdigit
+  )a
+
+  @type character_class ::
+          :alnum
+          | :alpha
+          | :ascii
+          | :blank
+          | :cntrl
+          | :digit
+          | :graph
+          | :lower
+          | :print
+          | :punct
+          | :space
+          | :upper
+          | :word
+          | :xdigit
+
+  @type set_opt ::
+          {:class, character_class}
+          | {:classes, list(character_class)}
+          | {:string, String.t()}
+
+  @type set_opts :: list(set_opt)
+
   ### Anchors ###
 
   @doc ~S"""
@@ -108,8 +148,8 @@ defmodule Verbalex do
   ## Examples
 
       iex> alias Verbalex, as: Vlx
-      iex> Vlx.anything_in_classes(:alnum) |> Vlx.zero_or_more()
-      "[[:alnum:]]*"
+      iex> "" |> Vlx.anything_in(string: "#@$%", class: :alnum) |> Vlx.zero_or_more()
+      "[#@$%[:alnum:]]*"
   """
   @spec zero_or_more(binary(), binary(), [{:escape, false}]) :: binary()
   def zero_or_more(before, string \\ "", opts \\ [])
@@ -126,7 +166,7 @@ defmodule Verbalex do
   ## Examples
 
       iex> alias Verbalex, as: Vlx
-      iex> Vlx.anything_in_classes(:alnum) |> Vlx.one_or_more()
+      iex> "" |> Vlx.anything_in(class: :alnum) |> Vlx.one_or_more()
       "[[:alnum:]]+"
   """
   @spec one_or_more(binary(), binary(), [{:escape, false}]) :: binary()
@@ -165,51 +205,9 @@ defmodule Verbalex do
   def anything(before \\ "") when is_binary(before), do: before <> "."
 
   @doc ~S"""
-  Matches for any of the characters in the given string.
+  Match any of the characters in a given character class, classes, or string - provided as opts.
 
-  ## Examples
-
-      iex> alias Verbalex, as: Vlx
-      iex> Vlx.anything_in_string("asdf") |> Vlx.one_or_more()
-      "[asdf]+"
-  """
-  @spec anything_in_string(binary()) :: binary()
-  def anything_in_string(string)
-      when is_binary(string) do
-    "[#{string}]"
-  end
-
-  @spec anything_in_string(binary(), binary()) :: binary()
-  def anything_in_string(before, string)
-      when are_binaries(before, string) do
-    before <> "[#{string}]"
-  end
-
-  @doc ~S"""
-  Matches for anything but the characters in the given string.
-
-  ## Examples
-
-      iex> alias Verbalex, as: Vlx
-      iex> Vlx.anything_not_in_string("asdf") |> Vlx.one_or_more()
-      "[^asdf]+"
-  """
-  @spec anything_not_in_string(binary()) :: binary()
-  def anything_not_in_string(string)
-      when is_binary(string) do
-    "[^#{string}]"
-  end
-
-  @spec anything_not_in_string(binary(), binary()) :: binary()
-  def anything_not_in_string(before, string)
-      when are_binaries(before, string) do
-    before <> "[^#{string}]"
-  end
-
-  @doc ~S"""
-  Matches any of the characters in a character class.
-
-  The supported class names are:
+  The supported class names (provided with `class: ...`, or `classes: [...]`) are:
     * `:alnum` - Letters and digits
     * `:alpha` - Letters
     * `:ascii` - Character codes 0-127
@@ -228,52 +226,41 @@ defmodule Verbalex do
   ## Examples
 
       iex> alias Verbalex, as: Vlx
-      iex> Vlx.anything_in_classes([:upper, :digit]) |> Vlx.one_or_more()
-      "[[:upper:][:digit:]]+"
-  """
-  @spec anything_in_classes(list(atom()) | atom()) :: binary()
-  def anything_in_classes(class) when is_atom(class), do: "[[:#{class}:]]"
-
-  def anything_in_classes(classes)
-      when is_list(classes) do
-    "[#{Enum.reduce(classes, &concat_class/2)}]"
-  end
-
-  @spec anything_in_classes(binary(), list(atom()) | atom()) :: binary()
-  def anything_in_classes(before, class) when is_atom(class),
-    do: before <> "[[:#{class}:]]"
-
-  def anything_in_classes(before, classes)
-      when is_binary(before) and is_list(classes) do
-    before <> "[#{Enum.reduce(classes, &concat_class/2)}]"
-  end
-
-  @doc ~S"""
-  Matches any character not covered in the given character classes.
-  Supported class names match `anything_in_classes` functionality.
-
-  ## Examples
+      iex> "" |> Vlx.anything_in(class: :alnum, string: "._%+-") |> Vlx.one_or_more()
+      "[[:alnum:]._%+-]+"
 
       iex> alias Verbalex, as: Vlx
-      iex> Vlx.anything_not_in_classes([:upper, :digit]) |> Vlx.one_or_more()
-      "[^[:upper:][:digit:]]+"
+      iex> "" |> Vlx.anything_in(classes: [:lower, :punct])
+      "[[:lower:][:punct:]]"
   """
+  @spec anything_in(binary(), set_opts()) :: binary()
+  def anything_in(before, opts \\ []) do
+    set_string =
+      opts
+      |> Enum.map(&build_set_piece/1)
+      |> Enum.join()
 
-  @spec anything_not_in_classes(list(atom())) :: binary()
-  def anything_not_in_classes(classes)
-      when is_list(classes) do
-    "[^#{Enum.reduce(classes, &concat_class/2)}]"
+    before <> "[#{set_string}]"
   end
 
-  @spec anything_not_in_classes(binary(), list(atom())) :: binary()
-  def anything_not_in_classes(before, classes)
-      when is_binary(before) and is_list(classes) do
-    before <> "[^#{Enum.reduce(classes, &concat_class/2)}]"
+  @doc """
+  Inverse of `anything_in/2`.
+  """
+  @spec anything_not_in(binary(), set_opts()) :: binary()
+  def anything_not_in(before, opts \\ []) do
+    set_string =
+      opts
+      |> Enum.map(&build_set_piece/1)
+      |> Enum.join()
+
+    before <> "[^#{set_string}]"
   end
 
-  @spec concat_class(atom(), binary()) :: binary()
-  defp concat_class(class, acc) when is_atom(acc), do: "[:#{acc}:][:#{class}:]"
-  defp concat_class(class, acc), do: "#{acc}[:#{class}:]"
+  defp build_set_piece({:class, class}) when class in @classes, do: "[:#{class}:]"
+  defp build_set_piece({:string, string}) when is_binary(string), do: string
+
+  defp build_set_piece({:classes, classes}) when is_list(classes),
+    do: classes |> Enum.map(fn class -> build_set_piece({:class, class}) end) |> Enum.join()
 
   @doc ~S"""
   Matches a linebreak character. Equivalent to "\n".
@@ -360,7 +347,7 @@ defmodule Verbalex do
   def capture(before \\ "") when is_binary(before), do: "(" <> before <> ")"
 
   @doc ~S"""
-  Wraps a regex string in a named-capturing group. To be utilised with `Regex.named_captures(regex, string, options \\ [])`.
+  Wraps a regex string in a named-capturing group. To be utilised with `Regex.named_captures(regex, string, opts \\ [])`.
 
   ## Examples
 

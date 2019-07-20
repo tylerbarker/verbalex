@@ -26,7 +26,7 @@ Regex.named_captures(protocols, "https://github.com/tylerbarker")
 ```elixir
 def deps do
   [
-    {:verbalex, "~> 0.1.0-dev"}
+    {:verbalex, "~> 0.2.0"}
   ]
 end
 ```
@@ -39,7 +39,7 @@ Documentation can be found at [https://hexdocs.pm/verbalex](https://hexdocs.pm/v
 
 Verbalex is essentially an Elixir port of the popular [Verbal Expressions](https://github.com/VerbalExpressions) family of libraries, while also taking some inspiration from [Simple Regex](https://simple-regex.com/).
 
-Thanks to Max Szengal for laying down some of the groundwork in 2013 with [ElixirVerbalExpressions](https://github.com/VerbalExpressions/ElixirVerbalExpressions).
+Thanks to Max Szengal for laying down the groundwork in 2013 with [ElixirVerbalExpressions](https://github.com/VerbalExpressions/ElixirVerbalExpressions).
 
 ## Contributing
 
