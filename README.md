@@ -26,7 +26,7 @@ Regex.named_captures(protocols, "https://github.com/tylerbarker")
 ```elixir
 def deps do
   [
-    {:verbalex, "~> 0.2.0"}
+    {:verbalex, "~> 0.3.0"}
   ]
 end
 ```

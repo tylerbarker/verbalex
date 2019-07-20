@@ -130,6 +130,18 @@ defmodule Verbalex do
   def occurs(before, n) when is_binary(before) and is_integer(n), do: before <> "{#{n}}"
 
   @doc ~S"""
+  Specify the minimum number of expected occurences to be found on a given expression.
+
+  ## Examples
+
+      iex> alias Verbalex, as: Vlx
+      iex> Vlx.digit() |> Vlx.capture() |> Vlx.occurs_at_least(2)
+      "(\d){2,}"
+  """
+  @spec occurs_at_least(binary(), integer()) :: binary()
+  def occurs_at_least(before, n) when is_binary(before) and is_integer(n), do: before <> "{#{n},}"
+
+  @doc ~S"""
   Specify the range of expected occurences to be found on a given expression.
 
   ## Examples
